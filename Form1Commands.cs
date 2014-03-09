@@ -106,7 +106,7 @@ namespace NP_Shop_Wizardry
             int lastPage = Convert.ToInt32(match.Groups[1].Value);
             log2(match.Groups[1].Value+" "+( (lastPage*75)-75 ));
 
-            reg = new Regex("showitem=[0-9]+\">(" + REGEX_ITEM_NAME + ")</a><br><b>([0-9,]+) NP", RegexOptions.Compiled);
+            reg = new Regex("showitem=[0-9]+\">(" + REGEX_ITEM_NAME + ")</a><br>.*?style=\"font-weight:bold;\">([0-9,]+) NP", RegexOptions.Compiled);
 
             //look through the pages of site and store all items
             for (int i = 1; i <= lastPage; i++)
