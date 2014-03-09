@@ -60,7 +60,7 @@ namespace NP_Shop_Wizardry
         {
             this.request = (HttpWebRequest)WebRequest.Create(url);
             request.Timeout = this.timeout;
-            request.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:16.0) Gecko/20100101 Firefox/16.0";
+            request.UserAgent = "Mozilla/5.0 (X11; Linux x86_64; rv:17.0) Gecko/20130917 Firefox/17.0 Iceweasel/17.0.9";
             request.Referer = this.referer;
             if (!usePrivateCookieJar)
                 request.CookieContainer = cookieJar;
