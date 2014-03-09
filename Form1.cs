@@ -344,9 +344,9 @@ namespace NP_Shop_Wizardry
                         break;
                     case "Abandoned Attic" :
                         t = new Thread(new ThreadStart(this.tShop_Abandoned_Attic));
-                        t2 = new Thread(new ThreadStart(this.tShop_Abandoned_Attic2));
-                        myThreads.Add(t2);
-                        t2.Start();
+                        //t2 = new Thread(new ThreadStart(this.tShop_Abandoned_Attic));
+                        //myThreads.Add(t2);
+                        //t2.Start();
                         break;
                     default:
                         continue;

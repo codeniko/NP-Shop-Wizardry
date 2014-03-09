@@ -260,7 +260,8 @@ namespace NP_Shop_Wizardry
             
             int atticIndex = 1; 
             //Regex reg = new Regex("<input type=['\"]?hidden['\"]? name=['\"]?oii['\"]? value=['\"]?([0-9]+)['\"]?>[ \n\r\t]+<input type=['\"]?hidden['\"]? name=['\"]?neopets['\"]? value=['\"]?([a-zA-Z0-9]+)['\"]?>.+?[ \n\r\t]+.+?[ \n\r\t]+<b>(" + REGEX_ITEM_NAME + ")</b><br>([0-9]+) in stock<br>Cost: ([0-9,]+) NP<br><br></form>", RegexOptions.IgnoreCase);
-            Regex reg = new Regex(@"<input type='hidden' name='oii' value='([0-9]+)'>[ \n\r\t]{0,}<input type='hidden' name='neopets' value='([0-9]+)'>[ \n\r\t]{0,}.+[ \n\r\t]{0,}<b>(" + REGEX_ITEM_NAME + ")</b><br>[0-9]+ in stock<br>Cost: ([0-9,]+) NP<br><br></form>", RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.Multiline);
+            //Regex reg = new Regex(@"<input type='hidden' name='oii' value='([0-9]+)'>[ \n\r\t]{0,}<input type='hidden' name='neopets' value='([0-9]+)'>[ \n\r\t]{0,}.+[ \n\r\t]{0,}<b>(" + REGEX_ITEM_NAME + ")</b><br>[0-9]+ in stock<br>Cost: ([0-9,]+) NP<br><br></form>", RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.Multiline); // worked in 2011
+            Regex reg = new Regex("<li oii=\"([0-9]+)\" oname=\"(" + REGEX_ITEM_NAME + ")\" oprice=\"([0-9,]+)\">", RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.Multiline); // 2014 edit
             Random random = new Random();
             //int delay = 500;
             int randomizer = 1000;
@@ -329,8 +330,8 @@ namespace NP_Shop_Wizardry
                                       (match.Groups[3].Value[draikIndex + 6] == 'T' && match.Groups[3].Value[draikIndex + 7] == 'r'))
                                 {
                                     //one of these exists, BUY!
-                                    curl.post("http://www.neopets.com/halloween/garage.phtml", "purchase=1&oii=" + match.Groups[1].Value + "&neopets=" + match.Groups[2].Value);
-                                    log2("Found " + match.Groups[3].Value);
+                                    curl.post("http://www.neopets.com/halloween/garage.phtml", "purchase=1&oii=" + match.Groups[1].Value + "&neopets=");
+                                    log2("Found " + match.Groups[2].Value);
                                 }
                             }
                         }
@@ -340,38 +341,32 @@ namespace NP_Shop_Wizardry
                             int listIndex;
                             if ((listIndex = binarySearch(match.Groups[3].Value)) != -1)
                             {
-                                int shopPrice = Convert.ToInt32(match.Groups[4].Value.Replace(",", ""));
+                                int shopPrice = Convert.ToInt32(match.Groups[3].Value.Replace(",", ""));
                                 int profit = listItems[listIndex].price - shopPrice;
 
                                 if (profit > 2900000)
                                 {
                                     //instant buy
-                                    curl.post("http://www.neopets.com/halloween/garage.phtml", "purchase=1&oii=" + match.Groups[1].Value + "&neopets=" + match.Groups[2].Value);
-                                    log2("[" + DateTime.Now.ToString("T") + "] " + match.Groups[3].Value + " (" + shopPrice + ") profit=" + profit);
+                                    curl.post("http://www.neopets.com/halloween/garage.phtml", "purchase=1&oii=" + match.Groups[1].Value + "&neopets=");
+                                    log2("[" + DateTime.Now.ToString("T") + "] " + match.Groups[2].Value + " (" + shopPrice + ") profit=" + profit);
                                 }
                                 else if (profit >= Convert.ToInt32(textBoxMinAtticProfit.Text))
                                 {
-                                    profitableItems[count++] = new Item(match.Groups[1].Value, match.Groups[3].Value, shopPrice, profit,  match.Groups[2].Value);
+                                    profitableItems[count++] = new Item(match.Groups[1].Value, match.Groups[2].Value, shopPrice, profit);
                                 }
                             }
                         }
 
                         if (count == 0) //no profitable items
                         {
-                            continue; // delete this line and uncomment the rest of non randomizers
-                            //log("[" + DateTime.Now.ToString("T") + "] Checked AA [" + matches.Count + "]["+sw.ElapsedMilliseconds+"]");
-                           // debug(src, true);
-                            // int randomNumber = random.Next(-1 * (randomizer), randomizer + 1);
-                            //int randomNumber = random.Next(0, randomizer + 1);
-                            //Thread.Sleep(randomNumber);
-                           // continue;
+                            continue; 
                         }
 
 
                         profitableItems = sortByProfit(profitableItems, count);
                         foreach (Item item in profitableItems)
                         {
-                            curl.post("http://www.neopets.com/halloween/garage.phtml", "purchase=1&oii=" + item.objID + "&neopets=" + item.hash);
+                            curl.post("http://www.neopets.com/halloween/garage.phtml", "purchase=1&oii=" + item.objID + "&neopets=");
                             log2("[" + DateTime.Now.ToString("T") + "] " + item.name + " (" + item.price + ") profit=" + item.profit);
                         }
                         //log("[" + DateTime.Now.ToString("T") + "] Checked AA [" + matches.Count + "][" + sw.ElapsedMilliseconds + "]");
@@ -379,7 +374,7 @@ namespace NP_Shop_Wizardry
                         if (matches.Count > 10 && matches.Count < 18)
                             break;
                     }
-                  /*  else
+                    /*else
                     {
                         log("[" + DateTime.Now.ToString("T") + "] Checked AA [0][" + sw.ElapsedMilliseconds + "]");
                         debug(src, false);
@@ -395,271 +390,6 @@ namespace NP_Shop_Wizardry
                 
             }
         }
-
-        private void tShop_Abandoned_Attic2()
-        {
-            //Regex reg = new Regex("<input type=['\"]?hidden['\"]? name=['\"]?oii['\"]? value=['\"]?([0-9]+)['\"]?>[ \n\r\t]+<input type=['\"]?hidden['\"]? name=['\"]?neopets['\"]? value=['\"]?([a-zA-Z0-9]+)['\"]?>.+?[ \n\r\t]+.+?[ \n\r\t]+<b>(" + REGEX_ITEM_NAME + ")</b><br>([0-9]+) in stock<br>Cost: ([0-9,]+) NP<br><br></form>", RegexOptions.IgnoreCase);
-            Regex reg = new Regex(@"<input type='hidden' name='oii' value='([0-9]+)'>[ \n\r\t]{0,}<input type='hidden' name='neopets' value='([0-9]+)'>[ \n\r\t]{0,}.+[ \n\r\t]{0,}<b>(" + REGEX_ITEM_NAME + ")</b><br>[0-9]+ in stock<br>Cost: ([0-9,]+) NP<br><br></form>", RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.Multiline);
-            Random random = new Random();
-            //int delay = 500;
-            int randomizer = 1000;
-            cURL curl = new cURL("http://www.neopets.com/halloween/garage.phtml", 1000);
-            cURL curlPrivate = new cURL("http://www.sunnyneo.com/attictimer/getTimes.php", true);
-            long nextRestock;
-
-            // Create an inferred delegate that invokes methods for the timer.
-            System.Threading.TimerCallback tcb = new System.Threading.TimerCallback(updateTimer);
-
-            while (true)
-            {
-                string psrc = curlPrivate.post("http://www.sunnyneo.com/attictimer/getTimes.php");
-                int divIndex = psrc.IndexOf('|');
-                if (divIndex == -1)
-                {
-                    MessageBox.Show("Unable to connect to the website that shows next Attic Restock, Trying again in 2 minutes.");
-                    Thread.Sleep(120000);
-                    continue;
-                }
-                psrc = psrc.Substring(divIndex + 1);
-                nextRestock = Convert.ToInt64(psrc);
-                long timestamp = getTimestamp();
-
-                int timeleft = (int)(nextRestock - timestamp); //seconds
-                if (timeleft > 6)
-                {
-                    Thread.Sleep(((timeleft - 5) * 1000)+100);
-                }
-                while (timestamp < nextRestock + 9)
-                {
-                    timestamp = getTimestamp();
-                    //System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
-
-                    string src = curl.post("http://www.neopets.com/halloween/garage.phtml");
-                    if (src == null) //timed out
-                    {
-                        log("Attic Connection Time-out");
-                        continue;
-                    }
-                    MatchCollection matches = reg.Matches(src);
-
-                    //if there are items, check each if profitable and buy
-                    if (matches.Count > 0)
-                    {
-                        Item[] profitableItems = new Item[matches.Count];
-                        int count = 0;
-
-                        //buy draig eggs and morphing potions ASAP
-                        foreach (Match match in matches)
-                        {
-                            int draikIndex = 0;
-                            if ((draikIndex = match.Groups[3].Value.IndexOf("Draik ")) != -1)
-                            {
-                                if ((match.Groups[3].Value[draikIndex + 6] == 'M' && match.Groups[3].Value[draikIndex + 7] == 'o') ||
-                                      (match.Groups[3].Value[draikIndex + 6] == 'E' && match.Groups[3].Value[draikIndex + 7] == 'g') ||
-                                      (match.Groups[3].Value[draikIndex + 6] == 'T' && match.Groups[3].Value[draikIndex + 7] == 'r'))
-                                {
-                                    //one of these exists, BUY!
-                                    curl.post("http://www.neopets.com/halloween/garage.phtml", "purchase=1&oii=" + match.Groups[1].Value + "&neopets=" + match.Groups[2].Value);
-                                    log2("Found " + match.Groups[3].Value);
-                                }
-                            }
-                        }
-
-                        foreach (Match match in matches)
-                        {
-                            int listIndex;
-                            if ((listIndex = binarySearch(match.Groups[3].Value)) != -1)
-                            {
-                                int shopPrice = Convert.ToInt32(match.Groups[4].Value.Replace(",", ""));
-                                int profit = listItems[listIndex].price - shopPrice;
-
-                                if (profit > 2900000)
-                                {
-                                    //instant buy
-                                    curl.post("http://www.neopets.com/halloween/garage.phtml", "purchase=1&oii=" + match.Groups[1].Value + "&neopets=" + match.Groups[2].Value);
-                                    log2("[" + DateTime.Now.ToString("T") + "] " + match.Groups[3].Value + " (" + shopPrice + ") profit=" + profit);
-                                }
-                                else if (profit >= Convert.ToInt32(textBoxMinAtticProfit.Text))
-                                {
-                                    profitableItems[count++] = new Item(match.Groups[1].Value, match.Groups[3].Value, shopPrice, profit, match.Groups[2].Value);
-                                }
-                            }
-                        }
-
-                        if (count == 0) //no profitable items
-                        {
-                            continue; //delete this line and uncomment everything else besides randomizers
-                            //log("[" + DateTime.Now.ToString("T") + "] Checked AA [" + matches.Count + "][" + sw.ElapsedMilliseconds + "]");
-                            //debug(src, true);
-                            // int randomNumber = random.Next(-1 * (randomizer), randomizer + 1);
-                            //int randomNumber = random.Next(0, randomizer + 1);
-                            //Thread.Sleep(randomNumber);
-                            //continue;
-                        }
-
-
-                        profitableItems = sortByProfit(profitableItems, count);
-                        foreach (Item item in profitableItems)
-                        {
-                            curl.post("http://www.neopets.com/halloween/garage.phtml", "purchase=1&oii=" + item.objID + "&neopets=" + item.hash);
-                            log2("[" + DateTime.Now.ToString("T") + "] " + item.name + " (" + item.price + ") profit=" + item.profit);
-                        }
-                        //log("[" + DateTime.Now.ToString("T") + "] Checked AA [" + matches.Count + "][" + sw.ElapsedMilliseconds + "]");
-                        debug(src, true);
-                        if (matches.Count > 10 && matches.Count < 18)
-                            break;
-                    }
-                  /*  else
-                    {
-                        log("[" + DateTime.Now.ToString("T") + "] Checked AA [0][" + sw.ElapsedMilliseconds + "]");
-                        debug(src, false);
-                    }*/
-
-                    //int randomNumber2 = random.Next(-1 * (randomizer), randomizer + 1);
-                    // int randomNumber2 = random.Next(100, randomizer + 1);
-                    //Thread.Sleep(randomNumber2);
-                }
-                Thread.Sleep(3000);
-                //updateTimer(atticIndex, "Waiting " + (delay + randomNumber) + "ms");
-
-            }
-        }
-
-        private void tShop_Abandoned_Attic3()
-        {
-            //Regex reg = new Regex("<input type=['\"]?hidden['\"]? name=['\"]?oii['\"]? value=['\"]?([0-9]+)['\"]?>[ \n\r\t]+<input type=['\"]?hidden['\"]? name=['\"]?neopets['\"]? value=['\"]?([a-zA-Z0-9]+)['\"]?>.+?[ \n\r\t]+.+?[ \n\r\t]+<b>(" + REGEX_ITEM_NAME + ")</b><br>([0-9]+) in stock<br>Cost: ([0-9,]+) NP<br><br></form>", RegexOptions.IgnoreCase);
-            Regex reg = new Regex(@"<input type='hidden' name='oii' value='([0-9]+)'>[ \n\r\t]{0,}<input type='hidden' name='neopets' value='([0-9]+)'>[ \n\r\t]{0,}.+[ \n\r\t]{0,}<b>(" + REGEX_ITEM_NAME + ")</b><br>[0-9]+ in stock<br>Cost: ([0-9,]+) NP<br><br></form>", RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.Multiline);
-            Random random = new Random();
-            //int delay = 500;
-            int randomizer = 1000;
-            cURL curl = new cURL("http://www.neopets.com/halloween/garage.phtml", 1000);
-            cURL curlPrivate = new cURL("http://www.sunnyneo.com/attictimer/getTimes.php", true);
-            long nextRestock;
-
-            // Create an inferred delegate that invokes methods for the timer.
-            System.Threading.TimerCallback tcb = new System.Threading.TimerCallback(updateTimer);
-
-            while (true)
-            {
-                string psrc = curlPrivate.post("http://www.sunnyneo.com/attictimer/getTimes.php");
-                int divIndex = psrc.IndexOf('|');
-                if (divIndex == -1)
-                {
-                    MessageBox.Show("Unable to connect to the website that shows next Attic Restock, Trying again in 2 minutes.");
-                    Thread.Sleep(120000);
-                    continue;
-                }
-                psrc = psrc.Substring(divIndex + 1);
-                nextRestock = Convert.ToInt64(psrc);
-                long timestamp = getTimestamp();
-
-                int timeleft = (int)(nextRestock - timestamp); //seconds
-                if (timeleft > 6)
-                {
-                    Thread.Sleep(((timeleft - 5) * 1000) +100);
-                }
-                while (timestamp < nextRestock + 9)
-                {
-                    timestamp = getTimestamp();
-                    //System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
-
-                    string src = curl.post("http://www.neopets.com/halloween/garage.phtml");
-                    if (src == null) //timed out
-                    {
-                        log("Attic Connection Time-out");
-                        continue;
-                    }
-                    MatchCollection matches = reg.Matches(src);
-
-                    //if there are items, check each if profitable and buy
-                    if (matches.Count > 0)
-                    {
-                        Item[] profitableItems = new Item[matches.Count];
-                        int count = 0;
-
-                        //buy draig eggs and morphing potions ASAP
-                        foreach (Match match in matches)
-                        {
-                            int draikIndex = 0;
-                            if ((draikIndex = match.Groups[3].Value.IndexOf("Draik ")) != -1)
-                            {
-                                if ((match.Groups[3].Value[draikIndex + 6] == 'M' && match.Groups[3].Value[draikIndex + 7] == 'o') ||
-                                      (match.Groups[3].Value[draikIndex + 6] == 'E' && match.Groups[3].Value[draikIndex + 7] == 'g') ||
-                                      (match.Groups[3].Value[draikIndex + 6] == 'T' && match.Groups[3].Value[draikIndex + 7] == 'r'))
-                                {
-                                    //one of these exists, BUY!
-                                    curl.post("http://www.neopets.com/halloween/garage.phtml", "purchase=1&oii=" + match.Groups[1].Value + "&neopets=" + match.Groups[2].Value);
-                                    log2("Found " + match.Groups[3].Value);
-                                }
-                            }
-                        }
-
-                        foreach (Match match in matches)
-                        {
-                            int listIndex;
-                            if ((listIndex = binarySearch(match.Groups[3].Value)) != -1)
-                            {
-                                int shopPrice = Convert.ToInt32(match.Groups[4].Value.Replace(",", ""));
-                                int profit = listItems[listIndex].price - shopPrice;
-
-                                if (profit > 2900000)
-                                {
-                                    //instant buy
-                                    curl.post("http://www.neopets.com/halloween/garage.phtml", "purchase=1&oii=" + match.Groups[1].Value + "&neopets=" + match.Groups[2].Value);
-                                    log2("[" + DateTime.Now.ToString("T") + "] " + match.Groups[3].Value + " (" + shopPrice + ") profit=" + profit);
-                                }
-                                else if (profit >= Convert.ToInt32(textBoxMinAtticProfit.Text))
-                                {
-                                    profitableItems[count++] = new Item(match.Groups[1].Value, match.Groups[3].Value, shopPrice, profit, match.Groups[2].Value);
-                                }
-                            }
-                        }
-
-                        if (count == 0) //no profitable items
-                        {
-                            continue;
-                            //log("[" + DateTime.Now.ToString("T") + "] Checked AA [" + matches.Count + "][" + sw.ElapsedMilliseconds + "]");
-                          //  debug(src, true);
-                            // int randomNumber = random.Next(-1 * (randomizer), randomizer + 1);
-                            //int randomNumber = random.Next(0, randomizer + 1);
-                            //Thread.Sleep(randomNumber);
-                            //continue;
-                        }
-
-
-                        profitableItems = sortByProfit(profitableItems, count);
-                        foreach (Item item in profitableItems)
-                        {
-                            curl.post("http://www.neopets.com/halloween/garage.phtml", "purchase=1&oii=" + item.objID + "&neopets=" + item.hash);
-                            log2("[" + DateTime.Now.ToString("T") + "] " + item.name + " (" + item.price + ") profit=" + item.profit);
-                        }
-                        //log("[" + DateTime.Now.ToString("T") + "] Checked AA [" + matches.Count + "][" + sw.ElapsedMilliseconds + "]");
-                        debug(src, true);
-                        if (matches.Count > 10 && matches.Count < 18)
-                            break;
-                    }
-                   /* else
-                    {
-                        log("[" + DateTime.Now.ToString("T") + "] Checked AA [0][" + sw.ElapsedMilliseconds + "]");
-                        debug(src, false);
-                    }*/
-
-                    //int randomNumber2 = random.Next(-1 * (randomizer), randomizer + 1);
-                    // int randomNumber2 = random.Next(100, randomizer + 1);
-                    //Thread.Sleep(randomNumber2);
-                }
-                Thread.Sleep(3000);
-                //updateTimer(atticIndex, "Waiting " + (delay + randomNumber) + "ms");
-
-            }
-        }
-
-
-
-
-
-
-
 
 
         public long getTimestamp()
